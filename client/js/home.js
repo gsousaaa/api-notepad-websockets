@@ -5,8 +5,5 @@ joinRoomButton.addEventListener("click", () => {
     if (!roomNameInput.value){
         return;
     }
-    
     window.location.href = `/client/room.html?name=${roomNameInput.value}`;
-
-
 })
