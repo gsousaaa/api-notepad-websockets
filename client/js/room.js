@@ -9,7 +9,25 @@ roomNameLabel.innerText = roomName
 Pusher.logToConsole = true;
 
 const pusher = new Pusher('919f06b6a4ef43e6857f', {
-  cluster: 'us2'
+  cluster: 'us2',
+  channelAuthorization: {
+    endpoint: "http://localhost:3000/pusher/authorize",
+    paramsProvider: () => {
+        return {
+            user_id: localStorage.getItem('user_id'),
+            username: localStorage.getItem('username')
+        }
+    }
+  },
+  userAuthentication: {
+    endpoint: "http://localhost:3000/pusher/authenticate",
+    paramsProvider:  () => {
+        return {
+            user_id: localStorage.getItem('user_id'),
+            username: localStorage.getItem('username')
+        }
+    }
+}
 }); 
 
 // Ao soltar a tecla, o valor digitado é inserido no banco de dados.
@@ -37,7 +55,10 @@ window.addEventListener('load', async ()=> {
   roomContentTextArea.value = await data.noteContent
 })
 
+const userQuantityLabel = document.getElementById('userQty')
+
 if(roomName) {
+    pusher.signin()
     const channel = pusher.subscribe(roomName);
    
     channel.bind("updated-note", data => {
@@ -45,6 +66,19 @@ if(roomName) {
         if(data.content && data.userID != pusher.sessionID) {
             roomContentTextArea.value = data.content
         }
+    })
+
+    channel.bind("pusher:member_added", () => {
+        userQuantityLabel.innerText = Number(userQuantityLabel.innerText) + 1
+    })
+
+    channel.bind("pusher:member_removed", () => {
+        userQuantityLabel.innerText =  Number(userQuantityLabel.innerText) -1
+    })
+
+    channel.bind("pusher:subscription_succeeded", () => {
+        console.log({channel})
+        userQuantityLabel.innerText = channel.members.count
     })
 }
 
